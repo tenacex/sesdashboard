@@ -1,6 +1,43 @@
 services:
-  - type: docker-compose
-    name: sesdashboard
-    dockerComposePath: ./docker-compose.yml
+  # MySQL Database Service
+  - type: database
+    name: sesdashboard-mysql
+    runtime: docker
     plan: starter
-    autoDeploy: true
+    image: mysql:8.0
+    envFilePath: .env.local
+    disk:
+      sizeGB: 10
+    volumes:
+      - path: /var/lib/mysql
+        name: sesdashboard-mysql-datavolume
+
+  # PHP-FPM Service
+  - type: web
+    name: sesdashboard-php-fpm
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./phpdocker/php-fpm/Dockerfile
+    buildCommand: docker build -t sesdashboard-php-fpm ./phpdocker/php-fpm
+    startCommand: php-fpm
+    envFilePath: .env.local
+    volumes:
+      - path: /application
+        name: app-volume
+
+  # Nginx Web Server Service
+  - type: web
+    name: sesdashboard-webserver
+    runtime: docker
+    plan: starter
+    image: nginx:alpine
+    startCommand: nginx -g 'daemon off;'
+    envFilePath: .env.local
+    volumes:
+      - path: /application
+        name: app-volume
+      - path: /etc/nginx/conf.d/default.conf
+        file: ./phpdocker/nginx/nginx.conf
+    ports:
+      - port: 80
+        protocol: http
