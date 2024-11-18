@@ -1,7 +1,6 @@
 services:
-  - type: web
+  - type: docker-compose
     name: sesdashboard
-    env: docker
-    plan: starter
     dockerComposePath: ./docker-compose.yml
+    plan: starter
     autoDeploy: true
